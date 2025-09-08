@@ -1,8 +1,10 @@
 library(twitteR)
-library(string)
-setup_twitter_oauth (consumer_key(The consumer key supplied by Twitter), 
-                     consumer_secret	(The consumer secret supplied by Twitter), 
-                     access_token	(The access token supplied by Twitter), 
-                     access_secret	(The access secret supplied by Twitter))
-  
+library(stringr)
+  api_key <- ""
+  api_secret <- ""
+  access_token <- ""
+  access_token_secret <- ""
+setup_twitter_oauth(api_key,api_secret,access_token,access_token_secret)
+tweets = searchTwitter('#rstats', n=50)
+tweetsDF = twListToDF(tweets)
 
