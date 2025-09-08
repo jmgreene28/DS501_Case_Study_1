@@ -1,0 +1,8 @@
+library(twitteR)
+library(string)
+setup_twitter_oauth (consumer_key(The consumer key supplied by Twitter), 
+                     consumer_secret	(The consumer secret supplied by Twitter), 
+                     access_token	(The access token supplied by Twitter), 
+                     access_secret	(The access secret supplied by Twitter))
+  
+
