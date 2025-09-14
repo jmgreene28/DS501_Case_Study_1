@@ -1,0 +1,327 @@
+---
+title: "Introduction to R"
+author: "DS 501"
+output: html_document
+---
+## Introduction
+- R is a software language for carrying out complicated (and simple) statistical analyses. 
+- It includes routines for data summary and exploration, graphical presentation and data modelling. 
+- When you work in R you create objects that are stored in the current workspace(also called image). 
+- Each object created remains in the image unless you explicitly delete it. 
+- At the end of the session the workspace will be lost unless you save it. 
+- Commands written in R are saved in memory throughout the session. 
+- You can scroll back to previous commands typed by using the `up` arrow key (and `down` to scroll back again). 
+- You can also `copy` and `paste` using standard editor techniques.
+- You finish an R session by typing `q()` at which point you will also be prompted as to whether or not you want to save the current
+workspace If you do not, it will be lost.
+- If you don't know how to use a function, or don't know what the options or default values are, type `help(functionname)`, `?functionname` or `??functionname` where function-name is the name of the function you are interested in. This will usually help and will often include
+examples to make things even clearer.
+
+## Objects and Arithmetic
+R stores information and operates on objects. The simplest objects are scalars, vectors and matrices.
+But there are many others, lists and dataframes for example. 
+
+```{r}
+4+6
+```
+
+We can assign objects values for subsequent use.
+```{r}
+x=6
+y=4
+z=x+y
+```
+
+We can look at the contents of the object by simply typing its name
+```{r}
+z
+```
+
+At any time we can list the objects which we have created
+```{r}
+ls()
+```
+
+More commonly a function will operate on an object, for example
+```{r}
+sqrt(36)
+```
+
+Objects can be removed from the current workspace with the `rm` function
+
+```{r}
+rm(x,y)
+ls()
+```
+
+Vectors can be created in R in a number of ways. We can describe all of the elements. Note the use of the function c to concatenate or "glue together" individual elements. This function can be used much more widely.
+
+```{r}
+z = c(5,9,1,0)
+z
+x = c(5,9)
+y = c(1,0)
+z = c(x,y)
+z
+```
+
+Sequences can be generated as follows:
+```{r}
+x = 1:10
+x
+seq(1:10)
+```
+
+while more general sequences can be generated using the seq command.
+```{r}
+seq(1,10,by=2)
+seq(8,20,length=6)
+```
+
+Another useful function for building vectors is the rep command for repeating things.
+```{r}
+rep(0,100)
+rep(1:3,6)
+rep(1:3,c(6,6,6))
+rep(1:3,rep(6,3))
+```
+
+R will often adapt to the objects it is asked to work on. R uses componentwise arithmetic on vectors. R will also try to make sense if objects are mixed.
+```{r}
+x = c(6,8,9)
+y = c(1,2,4)
+x+y
+x*y
+x+2
+```
+
+functions `length` and `sum`
+```{r}
+length(x)
+sum(x)
+```
+
+## Summaries and Subscripting
+
+Lets assume we collected some data from an experiment and stored them in an object x
+
+```{r}
+x = c(7.5,8.2,3.1,5.6,8.2,9.3,6.5,7.0,9.3,1.2,14.5,6.2)
+# Mean
+mean(x)
+
+# Variance
+var(x)
+
+# Standard Deviation
+sd(x)
+
+# Summary 
+summary(x)
+```
+
+Subset first six observations
+```{r}
+x[1:6]
+x[7:12]
+x[c(2,4,6)]
+```
+
+To exclude particular elements
+```{r}
+x[-c(1:6)]
+```
+
+## Matrices
+Matrices can be created in R in a variety of ways. Perhaps the simplest is to create the columns
+and then glue them together with the command `cbind` or `rbind`. 
+
+```{r}
+x = c(5,7,9)
+y = c(6,3,4)
+z = cbind(x,y)
+z
+dim(z)
+nrow(z)
+ncol(z)
+rbind(z,z)
+```
+
+Matrices can also be built by explicit construction via the function `matrix`. The matrix is 'filled-up' by columnwise by default.
+```{r}
+matrix(c(5,7,9,6,3,4), nrow=3)
+matrix(c(5,7,9,6,3,4), ncol=3)
+z = matrix(c(5,7,9,6,3,4), nrow=3, byrow=T)
+z
+```
+
+
+Matrix operations
+```{r}
+y = matrix(c(1,3,0,9,5,-1),nrow=3,byrow=T)
+y
+y+z
+y*z
+```
+
+Notice, multiplication here is componentwise rather than conventional matrix multiplication. Indeed, conventional matrix multiplication is undefined for y and z as the dimensions fail to match. Matrix multiplication is expressed using notation `%*%`
+
+```{r}
+x = matrix(c(3,4,-2,6),nrow=2,byrow=T)
+x
+y%*%x
+```
+
+Row-Means, Row-Sums, Col-Means, Col-Sums
+```{r}
+# Returns vector of row means.
+rowMeans(x)  
+# Returns vector of row sums.
+rowSums(x)	
+# Returns vector of column means.
+colMeans(x)	
+# Returns vector of column sums.
+colSums(x)	
+```
+
+
+```{r}
+# Transpose
+t(x)	
+
+# Creates diagonal matrix with elements of x in the principal diagonal
+p = c(1,2,3,4)
+diag(p)
+
+# Returns a vector containing the elements of the principal diagonal
+diag(x)	
+
+#	If k is a scalar, this creates a k x k identity matrix. 
+diag(3)
+
+# Inverse of a matrix x
+solve(x)
+solve(x) %*% x
+```
+
+Returns vector x in the equation b = Ax, i.e. $A^{-1}b$
+```{r}
+A = x
+b = c(1,2)
+solve(A, b)	
+```
+
+
+## Attaching to objects
+R includes a number of datasets that it is convenient to use for examples. You can get a description
+of what's available by typing
+```{r}
+data()
+data(ChickWeight)
+ChickWeight[1:10,]
+attach(ChickWeight)
+summary(weight)
+summary(ChickWeight[,1])
+summary(ChickWeight$weight)
+```
+
+## The `apply` function
+We can write loops in R, but they are best avoided whenever possible. A common situation
+is where we want to apply the same function to every row or column of a matrix. For example,
+we may want to find the mean value of each variable in the ChickWeight dataset. Obviously, we could
+operate on each column separately but this can be tedious, especially if there are many columns.
+The function `apply` simplifies things.
+```{r}
+apply(ChickWeight, 2, class)
+ChickWeight = apply(ChickWeight, 2, as.numeric)
+apply(ChickWeight, 2, class)
+apply(ChickWeight, 2, mean)
+```
+
+We would have used a 1 instead of a 2 if we wanted the mean of every row.
+
+## Graphics
+```{r}
+par(mfrow=c(2,2))
+hist(weight)
+boxplot(weight)
+hist(Time)
+boxplot(Time)
+```
+
+```{r}
+par(mfrow=c(1,1))
+plot(Time, weight)
+```
+
+```{r}
+pairs(iris[1:4], main = "Anderson's Iris Data -- 3 species", pch = 21, 
+      bg = c("red", "green3", "blue")[unclass(iris$Species)])
+```
+
+Like many other functions plot is object-specific, its behaviour depends on the
+object to which it is applied. For example, if the object is a matrix, `plot` is identical to `pairs`
+
+```{r}
+class(trees)
+plot(trees)
+class(faithful)
+plot(faithful)
+class(HairEyeColor)
+plot(HairEyeColor)
+class(nhtemp)
+plot(nhtemp)
+```
+
+## Writing functions
+An important feature of R is the facility to extend the language by writing your own functions.
+
+```{r, eval=F}
+fnName = function()
+{
+}
+```
+
+
+Let us write a function for standard deviation
+```{r}
+sd1 = function(x){
+  sqrt(var(x))
+}
+
+x = c(9,5,2,3,7)
+
+sd1(x)
+```
+
+If we want to change the function, the command `fix(sd1)` will open the function in an editor
+which we can then use to modify it. We can use this form also to define the
+function.
+
+```{r}
+several.plots<-function(x){
+par(mfrow=c(3,1))
+hist(x[,1])
+hist(x[,2])
+plot(x[,1],x[,2])
+par(mfrow=c(1,1))
+apply(x,2,summary)
+}
+
+several.plots(faithful)
+```
+
+## Resources
+
+1. Download R
+http://www.r-project.org
+
+2. Download RStudio IDE 
+http://www.rstudio.com
+
+3. The Comprehensive R Archive Network
+http://cran.r-project.org/web/packages/
+
+4. Learn R
+https://www.datacamp.com
+https://www.datacamp.com/courses/r-programming-with-swirl
