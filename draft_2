@@ -1,0 +1,9 @@
+#load csv file to dataframe
+    tweetData <- read.csv("C:/Users/jmgre/OneDrive/Documents/Grad School/DS501/Case Study 1/tweetsDF.csv", header = TRUE, sep = ",")
+#create dataframe for text data
+    tweetText <- c(tweetData$text)
+#check dataframe
+    summary(tweetText)
+    dim(tweetText)
+    head(tweetText)
+# extract text data
