@@ -1,0 +1,10 @@
+#load csv file into R
+tweetData <- read.csv("C:/Users/jmgre/OneDrive/Documents/Grad School/DS501/Week 3/Case Study 1/tweetsDF.csv", header = TRUE, sep = ",")
+#load packages for text preprocessing
+library(stringr)
+library(tidyverse)
+library(dplyr)
+#begin preprocessing, create dataframe of text column
+tweetText <- c(tweetData$text)
+#inspect new datafram
+summary(tweetText)
