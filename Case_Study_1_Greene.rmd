@@ -1,0 +1,114 @@
+---
+title: "Case Study 1"
+author: "James Greene"
+date: "2025-09-19"
+output:
+  html_document:
+    df_print: paged
+---
+
+
+## Twitter Data Analysis
+
+First, load tweetsDF.csv file to dataframe and assign 'tweetsDF' object.
+
+```{r eval=FALSE}
+tweetsDF <- read.csv("C:/Users/jmgre/OneDrive/Documents/Grad School/DS501/Week 3/Case Study 1/tweetsDF.csv", header = TRUE, sep = ",")
+```
+
+Next, load libraries and examine dataframe
+
+```{r eval=FALSE} 
+library(readr)
+library(tidyverse)
+library(tidytext)
+library(tidymodels)
+library(quanteda)
+library(SnowballC)
+library(rmarkdown)
+```
+
+```{r eval=FALSE}
+head(tweetsDF)
+```
+
+### Analyzing Tweets and Tweet Entities with Frequency Analysis
+
+First, text dataframe needs to be isolated. We will assign text_df object to this new object. But first we will run the text column vectors through User Defined Functions designed to remove URLs and other non-imformative text.
+
+
+```{r eval=FALSE}
+removeURLs <- function(text) {
+  return(gsub("http\\S+", "", text))
+}
+removeUsernamesWithRT <- function(text) {
+  return(gsub("^RT @[a-z,A-Z]*[0-9]*[a-z,A-Z]*[0-9]*: ","", text))
+}
+removeUsernames <- function(text) {
+  return(gsub("@[a-z,A-Z]*[0-9]*[a-z,A-Z]*[0-9]*", "", text))
+}      
+removeHashtagSignOnly <- function(text) {
+  return(gsub("#", "", text))
+}
+
+tweetsDF$processed_text <- apply(tweetsDF['text'], 2, removeURLs) 
+tweetsDF$processed_text <- apply(tweetsDF['processed_text'],2, removeUsernamesWithRT) 
+tweetsDF$processed_text <- apply(tweetsDF['processed_text'],2, removeUsernames)
+tweetsDF$processed_text <- apply(tweetsDF['processed_text'],2, removeHashtagSignOnly)
+```
+Create new text_df data frame with tweetsDF$text vector passed through above UDFs
+
+## Unnest tokens
+```{r eval = FALSE}
+text_df <- tweetsDF %>% 
+  unnest_tokens(word, processed_text)
+nrow(text_df)
+```
+
+## remove stop words
+
+```{r eval = FALSE}
+text_df <- text_df %>% 
+  anti_join(stop_words[stop_words$lexicon == "snowball",], by = "word")
+```
+
+## tokenize text stings into words
+
+```{r eval = FALSE}
+text_df %>%
+  count(word, sort = TRUE)%>%
+  nrow()
+```
+
+## Steming of words
+
+```{r eval = FALSE}
+text_df = text_df %>%
+  mutate(stem = wordStem(word))
+
+text_df %>%
+  count(stem, sort = TRUE) %>%
+  nrow()
+```
+
+## count and plot tokenized words into tables/charts
+
+```{r table-word_counts}
+knitr::kable(text_df %>% group_by(word) %>% 
+  summarise(count = n()) %>% 
+  arrange(desc(count)) %>% 
+  head(30), caption = 'Top 30 words by count')
+```
+
+
+
+```{r}
+plot(text_df %>% count(word, sort =TRUE) %>% 
+  filter(n > 20) %>% 
+  mutate(word = reorder(word,n)) %>%
+  ggplot(aes(x = n, y = word)) + geom_col() +
+  labs(title = "Words with > 20 occurrence in the tweets"))
+```
+
+
+
