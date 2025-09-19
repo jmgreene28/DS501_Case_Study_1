@@ -1,0 +1,21 @@
+## load CSV file to memory
+tweetsDF <- read.csv("C:/Users/jmgre/OneDrive/Documents/Grad School/DS501/Week 3/Case Study 1/tweetsDF.csv", header = TRUE, sep = ",")
+
+library(dplyr)
+#inspect loaded dataframe
+nrow(tweetsDF)
+str(tweetsDF)
+
+#create dataframe of tweet text by favorites
+
+favoriteDF <- tweetsDF[,c("text","favoriteCount")]
+
+
+#sort dataframe based on decending order of favorite counts
+favoriteDFSort <- arrange(favoriteDF, desc(favoriteCount))
+
+favoriteDFUnique <- unique(favoriteDFSort, by = "text")
+
+#print top 10 unique posts with highest favorite counts
+rownames(favoriteDFUnique) <- NULL
+head(favoriteDFUnique, 10)
