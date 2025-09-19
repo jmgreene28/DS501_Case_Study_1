@@ -1,0 +1,129 @@
+## load CSV file to memory
+tweetsDF <- read.csv("C:/Users/jmgre/OneDrive/Documents/Grad School/DS501/Week 3/Case Study 1/tweetsDF.csv", header = TRUE, sep = ",")
+
+#inspect loaded dataframe
+nrow(tweetsDF)
+
+table(tweetsDF$text)
+
+tweetsDF$text[1:3]
+
+#UDFs to clean text data in tweetsDF$text dataframe
+removeURLs <- function(text) {
+  return(gsub("http\\S+", "", text))
+}
+removeUsernamesWithRT <- function(text) {
+  return(gsub("^RT @[a-z,A-Z]*[0-9]*[a-z,A-Z]*[0-9]*: ","", text))
+}
+removeUsernames <- function(text) {
+  return(gsub("@[a-z,A-Z]*[0-9]*[a-z,A-Z]*[0-9]*", "", text))
+}      
+removeHashtagSignOnly <- function(text) {
+  return(gsub("#", "", text))
+}
+
+tweetsDF$processed_text <- apply(tweetsDF['text'], 2, removeURLs) 
+tweetsDF$processed_text <- apply(tweetsDF['processed_text'],2, removeUsernamesWithRT) 
+tweetsDF$processed_text <- apply(tweetsDF['processed_text'],2, removeUsernames)
+tweetsDF$processed_text <- apply(tweetsDF['processed_text'],2, removeHashtagSignOnly)
+
+#load libraries to process cleaned text data
+library(tidytext)
+library(dplyr)
+text_df <- tweetsDF %>% 
+  unnest_tokens(word, processed_text)
+nrow(text_df)
+
+tweetsDF$processed_text[1]
+
+nrow(text_df)
+
+#remove stop words
+text_df <- text_df %>% 
+  anti_join(stop_words[stop_words$lexicon == "snowball",], by = "word")
+
+nrow(text_df)
+
+#tokenize text stings into words
+text_df %>%
+  count(word, sort = TRUE)%>%
+  nrow()
+
+#stemming of words 
+text_df = text_df %>%
+  mutate(stem = wordStem(word))
+
+text_df %>%
+  count(stem, sort = TRUE) %>%
+  nrow()
+
+#count and plot tokenized words into tables/charts
+text_df %>% group_by(word) %>% 
+  summarise(count = n()) %>% 
+  arrange(desc(count)) %>% 
+  head(30)
+
+text_df %>% count(word, sort =TRUE) %>% 
+  filter(n > 20) %>% 
+  mutate(word = reorder(word,n)) %>%
+  ggplot(aes(x = n, y = word)) + geom_col() +
+  labs(title = "Words with > 20 occurrence in the tweets")
+
+## load CSV file to memory
+tweetsDF <- read.csv("C:/Users/jmgre/OneDrive/Documents/Grad School/DS501/Week 3/Case Study 1/tweetsDF.csv", header = TRUE, sep = ",")
+
+library(dplyr)
+#inspect loaded dataframe
+nrow(tweetsDF)
+str(tweetsDF)
+
+#create dataframe of tweet text by favorites
+
+favoriteDF <- tweetsDF[,c("text","favoriteCount")]
+
+
+#sort dataframe based on decending order of favorite counts
+favoriteDFSort <- arrange(favoriteDF, desc(favoriteCount))
+
+favoriteDFUnique <- unique(favoriteDFSort, by = "text")
+
+#print top 10 unique posts with highest favorite counts
+rownames(favoriteDFUnique) <- NULL
+head(favoriteDFUnique, 10)
+
+## load CSV file to memory
+tweetsDF <- read.csv("C:/Users/jmgre/OneDrive/Documents/Grad School/DS501/Week 3/Case Study 1/tweetsDF.csv", header = TRUE, sep = ",")
+
+library(dplyr)
+
+#inspect loaded dataframe
+nrow(tweetsDF)
+str(tweetsDF) #check dataframe
+
+#create dataframe of tweet text by favorites
+favoriteDF <- tweetsDF[,c("text","favoriteCount")]
+
+#sort dataframe based on decending order of favorite counts
+favoriteDFSort <- arrange(favoriteDF, desc(favoriteCount))
+favoriteDFUnique <- unique(favoriteDFSort, by = "text")
+
+#print top 10 unique posts with highest favorite counts
+rownames(favoriteDFUnique) <- NULL
+head(favoriteDFUnique, 10)
+
+#create dataframe of tweet text by retweet amounts
+retweetDF <- tweetsDF[,c("text","retweetCount")]
+
+str(retweetDF)
+head(retweetDF) #check dataframe
+
+#sort datafram based on decending order of favorite counts
+retweetDFSort <- arrange(retweetDF, desc(retweetCount))
+head(retweetDFSort) #check dataframe
+retweetDFUnique <- unique(retweetDFSort, by = "text") #create new dataframe for unique posts only
+
+#print top 10 unique posts with highest retweet counts
+rownames(retweetDFUnique) <-  NULL
+head(retweetDFUnique, 10)
+
+
