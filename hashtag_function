@@ -1,0 +1,12 @@
+library(dplyr)
+library(stringr)
+library(tidytext)
+tweetsDF <- read.csv("C:/Users/jmgre/OneDrive/Documents/Grad School/DS501/Week 3/Case Study 1/tweetsDF.csv", header = TRUE, sep = ",")
+tweetsDF$hashtags <- str_extract_all(tweetsDF$text, "#\\w+")
+hashTags <- tweetsDF %>%
+  select(hashtags) %>%
+  tidyr::unnest(hashtags)
+hashTags %>% group_by(hashtags) %>% 
+               summarise(count = n()) %>% 
+               arrange(desc(count)) %>% 
+               head(10)
