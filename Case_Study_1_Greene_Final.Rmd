@@ -1,0 +1,206 @@
+---
+title: 'DS 501 Case Study 1: Twitter Analysis'
+author: "James Greene"
+date: "09-20-2025"
+output:
+  bookdown::pdf_document2:
+    latex_engine: lualatex
+  tufte::tufte_handout:
+    latex_engine: xelatex
+params:
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = F)
+```
+
+## Preparing the Data
+-   Load provided TweetsDF.csv file into dataframe.
+
+```{r, eval = T}
+tweetsDF <- read.csv("C:/Users/jmgre/OneDrive/Documents/Grad School/DS501/Week 3/Case Study 1/tweetsDF.csv", header = TRUE, sep = ",", encoding = "UTF-8")
+```
+-   Next load packages to be used for data analysis and data blending.
+```{r Libraries, eval = T, include = F}
+library(dplyr)
+library(readr)
+library(tidyverse)
+library(tidytext)
+library(tidymodels)
+library(quanteda)
+library(SnowballC)
+library(rmarkdown)
+library(knitr)
+```
+-   Examine created dataframe to validate operations. In table 1, we have the column names listed for reference while examining the data.
+```{r Column Names, eval=T}
+kable(colnames(tweetsDF), align = "c")
+```
+
+## Cleaning the Data
+-   To analyze the word content of the text, we must isolate and clean the text itself.
+-   First we will isolate the text column of the dataframe by creating a new object.
+-   We will assign text_df name to this new object.
+-   User Defined Functions designed to remove URLs and other non-informative text will be created to clean the text data.
+
+```{r, eval = T}
+removeURLs <- function(text) {
+  return(gsub("http\\S+", "", text, useBytes = T))
+}
+removeUsernamesWithRT <- function(tweet) {
+  return(gsub("^RT @[a-z,A-Z]*[0-9]*[a-z,A-Z]*[0-9]*: ","", tweet))
+}
+removeUsernames <- function(text) {
+  return(gsub("@[a-z,A-Z]*[0-9]*[a-z,A-Z]*[0-9]*", "", text,  useBytes = T))
+}      
+removeHashtagSignOnly <- function(text) {
+  return(gsub("#", "", text))
+}
+```
+
+```{r UDF, eval = T, echo = T}
+tweetsDF$processed_text <- apply(tweetsDF['text'], 2, removeURLs) 
+tweetsDF$processed_text <- apply(tweetsDF['processed_text'],2, removeUsernamesWithRT) 
+tweetsDF$processed_text <- apply(tweetsDF['processed_text'],2, removeUsernames)
+tweetsDF$processed_text <- apply(tweetsDF['processed_text'],2, removeHashtagSignOnly)
+```
+
+-   Text vector passed through custom functions.
+-   We can now count the total number of words in the text to analyze.
+
+```{r Word Count, eval = T}
+text_df <- tweetsDF %>% 
+  unnest_tokens(word, processed_text)
+nrow(text_df)
+```
+
+## Analyzing the Data
+
+-   To analyze the the text data, we need isolate the useful information - words.
+-   First we remove stop words with lexicon library.
+```{r, eval = T}
+text_df <- text_df %>% 
+  anti_join(stop_words[stop_words$lexicon == "snowball",], by = "word")
+```
+-   Filter stem words via stemming technique. Now we have a final word count after cleaning the text data:
+```{r, eval = T}
+text_df = text_df %>%
+  mutate(stem = wordStem(word))
+
+text_df %>%
+  count(stem, sort = TRUE) %>%
+  nrow()
+```
+
+------------------------------------------------------------------------
+
+## Visualizing the Data
+
+-   Now that we have a data frame of useful information, we can now visualize it.
+-   Table 1 displays the top 30 words used, with their counts.
+
+```{r, eval = T}
+knitr::kable(text_df %>% group_by(word) %>% 
+  summarise(count = n()) %>% 
+  arrange(desc(count)) %>% 
+  head(30), align = "lc", caption = 'Top 30 words by count')
+```
+
+-   We can also plot the most commonly used words, to visualize frequency from another perspective.
+
+```{r}
+plot(text_df %>% count(word, sort =TRUE) %>% 
+  filter(n > 20) %>% 
+  mutate(word = reorder(word,n)) %>%
+  ggplot(aes(x = n, y = word)) + geom_col() +
+  labs(title = "Words with > 20 occurrences"))
+```
+
+## Further Popularity Analysis
+
+-   Further popularity analysis can be performed with favorite and retweet counts.
+-   Table 2 shows the top 10 tweets, by number of favorites.
+-   Table 3 shows top 10 tweets, by number of retweets.
+-   Also, we can look at top 10 user, based on favorite count on table 4.
+-   Conversely, a table top 10 users, based on retweet count, is on table 5.
+
+```{r eval = T, include = F}
+library(dplyr)
+library(tinytex)
+library(rmarkdown)
+library(knitr)
+tweetsDF <- read.csv("C:/Users/jmgre/OneDrive/Documents/Grad School/DS501/Week 3/Case Study 1/tweetsDF.csv", header = TRUE, sep = ",")
+favoriteDF <- tweetsDF[,c("text","favoriteCount")]
+favoriteDFSort <- arrange(favoriteDF, desc(favoriteCount))
+favoriteDFUnique <- unique(favoriteDFSort, by = "text")
+favoriteDFUnique2 <-  favoriteDFUnique %>%
+  arrange(desc(favoriteCount))
+```
+```{r, eval = T}
+knitr::kable(head(favoriteDFUnique2, 10), align = "lc", caption = 'Most Popular Tweets by Favorite Count')
+```
+
+```{r eval = T, include = F}
+library(dplyr)
+library(tinytex)
+library(rmarkdown)
+library(knitr)
+tweetsDF <- read.csv("C:/Users/jmgre/OneDrive/Documents/Grad School/DS501/Week 3/Case Study 1/tweetsDF.csv", header = TRUE, sep = ",")
+retweetDF <- tweetsDF[,c("text","retweetCount")]
+retweetDFSort <- arrange(retweetDF, desc(retweetCount))
+retweetDFUnique <- unique(retweetDFSort, by = "text") #create new dataframe for unique posts only
+retweetDFUnique2 <- retweetDFUnique %>%
+    arrange(desc(retweetCount))
+```
+```{r eval=T, fig.height=4, fig.width=4}
+knitr::kable(head(retweetDFUnique2, 10), align = "lc", caption = 'Most Popular Tweets by RT Count')
+```
+
+-  
+```{r eval = T, include = F}
+library(dplyr)
+library(tinytex)
+library(rmarkdown)
+library(knitr)
+tweetsDF <- read.csv("C:/Users/jmgre/OneDrive/Documents/Grad School/DS501/Week 3/Case Study 1/tweetsDF.csv", header = TRUE, sep = ",")
+userDF <- tweetsDF[,c("screenName","favoriteCount")]
+userDFSort <- arrange(userDF, desc(favoriteCount))
+userDFUnique <- unique(userDFSort, by = "screenName")
+userDFUnique2 <-  userDFUnique %>%
+  arrange(desc(favoriteCount))
+```
+```{r, eval = T}
+knitr::kable(head(userDFUnique2, 10), align = "lc", caption = 'Top 10 Favorited Users')
+```
+```{r eval = T, include = F}
+library(dplyr)
+library(tinytex)
+library(rmarkdown)
+library(knitr)
+tweetsDF <- read.csv("C:/Users/jmgre/OneDrive/Documents/Grad School/DS501/Week 3/Case Study 1/tweetsDF.csv", header = TRUE, sep = ",")
+retweetDF <- tweetsDF[,c("screenName","retweetCount")]
+retweetDFSort <- arrange(retweetDF, desc(retweetCount))
+retweetDFUnique <- unique(retweetDFSort, by = "screenName")
+retweetDFUnique2 <-  retweetDFUnique %>%
+  arrange(desc(retweetCount))
+```
+```{r, eval = T}
+knitr::kable(head(retweetDFUnique2, 10), align = "lc", caption = 'Top 10 Retweeted Users')
+```
+- Lastly, we have table 6, that lists the top ten hashtags, by number of occurrences.
+```{r, eval = T}
+library(dplyr)
+library(stringr)
+library(tidytext)
+tweetsDF <- read.csv("C:/Users/jmgre/OneDrive/Documents/Grad School/DS501/Week 3/Case Study 1/tweetsDF.csv", header = TRUE, sep = ",")
+tweetsDF$hashtags <- str_extract_all(tweetsDF$text, "#\\w+")
+hashTags <- tweetsDF %>%
+  select(hashtags) %>%
+  tidyr::unnest(hashtags)
+```
+```{r}
+knitr::kable(hashTags %>% group_by(hashtags) %>% 
+               summarise(count = n()) %>% 
+               arrange(desc(count)) %>% 
+               head(10), align = "lc", caption = 'Top 10 hashtags by count')
+```
