@@ -1,0 +1,123 @@
+---
+title: 'DS 501 Case Study 1: Twitter Analysis'
+author: "James Greene"
+date: "09-20-2025"
+output:
+  pdf_document:   
+  latex_engine: xelatex
+  html_document: default
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = F)
+```
+
+## Introduction
+- Load provided TweetsDF.csv file into dataframe 
+
+```{r, eval = T}
+tweetsDF <- read.csv("C:/Users/jmgre/OneDrive/Documents/Grad School/DS501/Week 3/Case Study 1/tweetsDF.csv", header = TRUE, sep = ",")
+```
+
+- Next load packages to be used for data analysis and data blending
+
+
+```{r Libraries, eval = T, include = F}
+library(dplyr)
+library(readr)
+library(tidyverse)
+library(tidytext)
+library(tidymodels)
+library(quanteda)
+library(SnowballC)
+library(rmarkdown)
+```
+
+- Examine created dataframe to validate operations. Here we see the column names for the data:
+
+```{r Column Names, eval=TRUE, include = T}
+col_names <-  colnames(tweetsDF)
+print(col_names)
+```
+
+### Analyzing Tweets and Tweet Entities with Frequency Analysis
+
+- First, tweet text strings needs to be isolated in to a dataframe for analysis. 
+- We will assign text_df name to this new object.
+- Next, we will run the text column vectors through User Defined Functions designed to remove URLs and other non-informative text.
+
+
+```{r, eval = T}
+removeURLs <- function(text) {
+  return(gsub("http\\S+", "", text))
+}
+removeUsernamesWithRT <- function(text) {
+  return(gsub("^RT @[a-z,A-Z]*[0-9]*[a-z,A-Z]*[0-9]*: ","", text))
+}
+removeUsernames <- function(text) {
+  return(gsub("@[a-z,A-Z]*[0-9]*[a-z,A-Z]*[0-9]*", "", text))
+}      
+removeHashtagSignOnly <- function(text) {
+  return(gsub("#", "", text))
+}
+
+tweetsDF$processed_text <- apply(tweetsDF['text'], 2, removeURLs) 
+tweetsDF$processed_text <- apply(tweetsDF['processed_text'],2, removeUsernamesWithRT) 
+tweetsDF$processed_text <- apply(tweetsDF['processed_text'],2, removeUsernames)
+tweetsDF$processed_text <- apply(tweetsDF['processed_text'],2, removeHashtagSignOnly)
+```
+
+- Create new text_df data frame with tweetsDF$text vector passed through UDFs. Below is a word count of the tweet text before cleaning up the data:
+
+```{r Word Count, eval = T}
+text_df <- tweetsDF %>% 
+  unnest_tokens(word, processed_text)
+nrow(text_df)
+```
+
+- Remove Stop Words with lexicon library
+
+```{r, eval = T}
+text_df <- text_df %>% 
+  anti_join(stop_words[stop_words$lexicon == "snowball",], by = "word")
+```
+
+- Filter stem words via stemming technique. Now we have a final word count after cleaning the text data: 
+
+```{r, eval = T}
+text_df = text_df %>%
+  mutate(stem = wordStem(word))
+
+text_df %>%
+  count(stem, sort = TRUE) %>%
+  nrow()
+```
+
+-----
+
+-Visualizing the data
+
+- Use the tweets you collected in Problem 1, and compute the frequencies of the words being used in these tweets.
+- Display a table of the top 30 words (ONLY) with their counts
+
+```{r, table-word_counts, eval = T}
+knitr::kable(text_df %>% group_by(word) %>% 
+  summarise(count = n()) %>% 
+  arrange(desc(count)) %>% 
+  head(30), caption = 'Top 30 words by count')
+```
+
+- Word plot of most commonly used words:
+
+```{r}
+plot(text_df %>% count(word, sort =TRUE) %>% 
+  filter(n > 20) %>% 
+  mutate(word = reorder(word,n)) %>%
+  ggplot(aes(x = n, y = word)) + geom_col() +
+  labs(title = "Words with > 20 occurrences"))
+```
+
+ **2. Find the most popular tweets in your collection of tweets** -->
+
+ - Please display a table of the top 10 tweets (ONLY) that are the most popular among your collection, i.e., the tweets with the largest number of retweet counts. -->
+ 
